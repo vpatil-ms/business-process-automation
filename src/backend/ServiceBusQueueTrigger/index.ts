@@ -1,16 +1,17 @@
 import { AzureFunction, Context } from "@azure/functions"
 import { ServiceBusMQ } from "../services/messageQueue";
-import { CosmosDB } from "../services/db"
+import { BlobDB } from "../services/db"
 import { mqTrigger } from "../engine/commonTrigger";
+import { BlobStorage } from "../services/storage";
 
 const serviceBusQueue: AzureFunction = async function (context: Context, mySbMsg: any): Promise<void> {
     const mq = new ServiceBusMQ()
-    const db = new CosmosDB(process.env.COSMOSDB_CONNECTION_STRING,process.env.COSMOSDB_DB_NAME, process.env.COSMOSDB_CONTAINER_NAME)
-    if(mySbMsg?.dbId){
-        const data = await db.getByID(mySbMsg.dbId)
-        mySbMsg.data = data.data
-        mySbMsg.aggregatedResults = data.aggregatedResults
-        //db.deleteByID(mySbMsg.dbId)
+    const db = new BlobDB(process.env.AzureWebJobsStorage,"db", process.env.BLOB_STORAGE_CONTAINER)
+    if(!mySbMsg?.subject){
+        const data = await db.getByID(mySbMsg.id, mySbMsg.pipeline)
+        mySbMsg = data
+        const resultsBlob : BlobStorage = new BlobStorage(process.env.AzureWebJobsStorage, 'documents')
+        mySbMsg.aggregatedResults.buffer = await resultsBlob.getBuffer(mySbMsg.filename)
     }
     
     context.log("Entering mqTrigger")

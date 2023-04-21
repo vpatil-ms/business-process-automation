@@ -1,6 +1,7 @@
 import { BpaConfiguration, BpaStage, BpaServiceObject } from "./types"
 import MessageQueue from "../services/messageQueue"
 import { DB } from "../services/db"
+import { BlobStorage } from "../services/storage"
 const _ = require('lodash')
 
 export class BpaEngine {
@@ -15,7 +16,7 @@ export class BpaEngine {
 
     }
 
-    public processFile = async (fileBuffer: Buffer, fileName: string, config: BpaConfiguration, mq : MessageQueue, db : DB): Promise<BpaServiceObject> => {
+    public processFile = async (blob : BlobStorage, fileBuffer: Buffer, fileName: string, config: BpaConfiguration, mq : MessageQueue, db : DB): Promise<BpaServiceObject> => {
 
         let currentInput: BpaServiceObject = {
             label: "first",
@@ -29,6 +30,12 @@ export class BpaEngine {
         }
 
         console.log(this._getFileType(fileName))
+
+        if(this._getFileType(fileName).toLowerCase() === 'txt'){
+            currentInput.data = currentInput.data.toString()
+            currentInput.type = "text"
+            currentInput.aggregatedResults["text"] = currentInput.data.toString()
+        }
 
         let stageIndex = 1
         return this._process(currentInput, config, stageIndex, mq, db)
@@ -51,18 +58,7 @@ export class BpaEngine {
                 if (currentInput.type === 'async transaction') {
                     delete currentInput.aggregatedResults.buffer
                     const dbout = await db.create(currentInput)
-
-                    delete currentInput.data
-
-                    currentInput.dbId = dbout.id
-                    currentInput.aggregatedResults = dbout.id
-                    currentInput.data = dbout.id
-
-                    currentInput.stages = config.stages
-                    currentInput.index = stageIndex
-
-                    
-                    await mq.sendMessage(currentInput)
+                    await mq.sendMessage({filename: currentInput.filename, id : dbout.id, pipeline : dbout.pipeline, label : dbout.label, type : currentInput.type})
                     break
                 }
             }
@@ -72,8 +68,8 @@ export class BpaEngine {
             stageIndex++;
         }
 
-        delete currentInput.data
-        delete currentInput.aggregatedResults.buffer
+        // delete currentInput.data
+        // delete currentInput.aggregatedResults.buffer
 
         return currentInput
 

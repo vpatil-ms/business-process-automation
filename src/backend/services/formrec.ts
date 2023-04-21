@@ -1,4 +1,4 @@
-import { DocumentAnalysisClient, AzureKeyCredential, AnalysisPoller, AnalyzedDocument, AnalyzeResult } from "@azure/ai-form-recognizer";
+import { DocumentAnalysisClient, AzureKeyCredential, AnalysisPoller, AnalyzedDocument, AnalyzeResult, AnalyzeDocumentOptions } from "@azure/ai-form-recognizer";
 import { PrebuiltBusinessCardModel } from "./prebuilt/prebuilt-businessCard";
 import { PrebuiltLayoutModel } from "./prebuilt/prebuilt-layout";
 import { PrebuiltInvoiceModel } from "./prebuilt/prebuilt-invoice";
@@ -11,6 +11,8 @@ import { BpaServiceObject } from "../engine/types";
 import { DB } from "./db";
 import axios, { AxiosRequestConfig, AxiosResponse } from "axios";
 import MessageQueue from "./messageQueue";
+import { OperationRequestOptions } from '@azure/core-client';
+import { BlobStorage } from "./storage";
 
 const _ = require('lodash')
 
@@ -19,13 +21,15 @@ export class FormRec {
     private _client: DocumentAnalysisClient
     private _apikey: string
     private _endpoint: string
-    private _containerReadEndpoint : string
+    private _containerReadEndpoint: string
+    private _blobClient: BlobStorage
 
-    constructor(endpoint: string, apikey: string, containerReadEndpoint ?: string) {
+    constructor(endpoint: string, apikey: string, blobClient: BlobStorage, containerReadEndpoint?: string) {
         this._client = new DocumentAnalysisClient(
             endpoint,
-            new AzureKeyCredential(apikey)
+            new AzureKeyCredential(apikey),
         )
+        this._blobClient = blobClient
         this._apikey = apikey
         this._endpoint = endpoint
         this._containerReadEndpoint = containerReadEndpoint
@@ -37,6 +41,7 @@ export class FormRec {
     public readContainer = async (input: BpaServiceObject, index: number): Promise<BpaServiceObject> => {
         console.log("read api 3.2 from container")
         const url = `${this._containerReadEndpoint}/vision/v3.2/read/analyze`
+
         const headers: AxiosRequestConfig = {
             headers: {
                 "accept": "*/*",
@@ -68,7 +73,8 @@ export class FormRec {
             bpaId: input.bpaId,
             label: label,
             aggregatedResults: results,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
 
 
@@ -97,7 +103,8 @@ export class FormRec {
             pipeline: input.pipeline,
             bpaId: input.bpaId,
             aggregatedResults: input.aggregatedResults,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
     }
 
@@ -153,7 +160,8 @@ export class FormRec {
             bpaId: input.bpaId,
             label: label,
             aggregatedResults: results,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
 
     }
@@ -179,7 +187,8 @@ export class FormRec {
             bpaId: input.bpaId,
             label: label,
             aggregatedResults: results,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
     }
 
@@ -204,7 +213,8 @@ export class FormRec {
             bpaId: input.bpaId,
             label: label,
             aggregatedResults: results,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
     }
 
@@ -308,14 +318,14 @@ export class FormRec {
             mySbMsg.data = axiosGetResp.data.analyzeResult
 
             const dbout = await db.create(mySbMsg)
-            mySbMsg.dbId = dbout.id
-            mySbMsg.aggregatedResults[mySbMsg.label] = dbout.id
-            mySbMsg.data = dbout.id
+            mySbMsg.id = dbout.id
+            //mySbMsg.aggregatedResults[mySbMsg.label] = dbout.id
+            //mySbMsg.data = dbout.id
 
-            await mq.sendMessage(mySbMsg)
+            await mq.sendMessage({ filename: mySbMsg.filename, id: mySbMsg.id, pipeline: mySbMsg.pipeline, label: mySbMsg.label, type: mySbMsg.type })
         } else {
             console.log('do nothing')
-            await mq.scheduleMessage(mySbMsg, 10000)
+            await mq.scheduleMessage({ filename: mySbMsg.filename, id: mySbMsg.id, pipeline: mySbMsg.pipeline, label: mySbMsg.label, type: mySbMsg.type }, 10000)
         }
     }
 
@@ -333,17 +343,37 @@ export class FormRec {
             bpaId: input.bpaId,
             label: label,
             aggregatedResults: results,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
     }
 
+    private _getUrl = async (filename: string): Promise<string> => {
+
+        const sasSourceUrl = await this._blobClient.getSasUrl(process.env.BLOB_STORAGE_ACCOUNT_NAME, process.env.BLOB_STORAGE_CONTAINER, process.env.BLOB_STORAGE_ACCOUNT_KEY)
+        const url = `https://${process.env.BLOB_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/documents/${filename}?${sasSourceUrl}`
+
+        return url
+    }
+
     private _analyzeDocumentAsync = async (input: BpaServiceObject, modelId: any, label: string, index: number): Promise<BpaServiceObject> => {
-        const poller: AnalysisPoller<AnalyzeResult<AnalyzedDocument>> = await this._client.beginAnalyzeDocument(modelId, input.data)
+        const headers = {
+            "Content-Type": "application/json",
+            "Ocp-Apim-Subscription-Key": this._apikey
+        }
+        const config: AxiosRequestConfig = {
+            headers: headers
+        }
+        const url = `${this._endpoint}formrecognizer/documentModels/${modelId.modelId}:analyze?api-version=2022-06-30-preview`
+        const data = {
+            "urlSource": await this._getUrl(input.filename)
+        }
+        const axiosResult = await axios.post(url, data, config)
+        console.log(JSON.stringify(axiosResult.data))
         input.aggregatedResults[label] = {
-            location: JSON.parse(poller.toString())["operationLocation"],
+            location: axiosResult.headers["operation-location"],
             filename: input.filename
         }
-
         return {
             index: index,
             type: "async transaction",
@@ -352,9 +382,11 @@ export class FormRec {
             pipeline: input.pipeline,
             bpaId: input.bpaId,
             aggregatedResults: input.aggregatedResults,
-            resultsIndexes: input.resultsIndexes
+            resultsIndexes: input.resultsIndexes,
+            id: input.id
         }
-    }
 
+
+    }
 
 }
