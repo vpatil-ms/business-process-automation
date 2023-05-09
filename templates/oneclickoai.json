@@ -644,7 +644,7 @@
           "appSettings": [
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
-              "value": "https://bpasource.blob.core.windows.net/source/huggingface/hf_backend_v008.zip?sv=2020-04-08&st=2023-04-20T17%3A03%3A11Z&se=2023-12-28T18%3A03%3A00Z&sr=b&sp=r&sig=UIal6QGVMUbi%2FDtxc1NbTpNeWBJNnAKjoZMBfYkWn94%3D"
+              "value": "https://bpasource.blob.core.windows.net/source/huggingface/hf_backend_v009.zip?sv=2020-04-08&st=2023-04-27T17%3A39%3A45Z&se=2024-05-16T17%3A39%3A00Z&sr=b&sp=r&sig=4vTccIngQDGtUi1fP49rDneJa0tQRlPDWjsPrkM2Irs%3D"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
@@ -735,7 +735,7 @@
           "appSettings": [
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
-              "value": "https://bpasource.blob.core.windows.net/source/backendv023.zip?sv=2020-04-08&st=2023-04-17T13%3A08%3A56Z&se=2024-01-24T14%3A08%3A00Z&sr=b&sp=r&sig=RXoIqQTi1ak48eJLU3iBSxa7FKSHwJpOoI2Pr3Bold0%3D"
+              "value": "https://bpasource.blob.core.windows.net/source/backendv027.zip?sv=2020-04-08&st=2023-04-26T18%3A02%3A05Z&se=2024-05-29T18%3A02%3A00Z&sr=b&sp=r&sig=nXgDtflUZewKRf%2BCJFUrpqevA3mhNcmpc0lpzzMGGig%3D"
             },
             {
               "name": "OPENAI_KEY",
