@@ -17,9 +17,10 @@ import { VideoIndexer } from "../services/videoIndexer"
 import { TableParser } from "../services/tableParser"
 import { OpenAI } from "../services/openai"
 import { SpliceDocument } from "../services/spliceDocument"
-import { RedactPdf } from "../services/redactPdf"
+//import { RedactPdf } from "../services/redactPdf"
 import { TextSegmentation } from "../services/textSegmentation"
 import { SplitPdf } from "../services/splitPdf"
+import { JsonToText } from "../services/jsonToText"
 
 const changeOutput = new ChangeOutput()
 const blob = new BlobStorage(process.env.AzureWebJobsStorage, process.env.BLOB_STORAGE_CONTAINER)
@@ -42,9 +43,38 @@ const openaiText = new OpenAI(process.env.OPENAI_ENDPOINT, process.env.OPENAI_KE
 const openaiSearchDoc = new OpenAI(process.env.OPENAI_ENDPOINT, process.env.OPENAI_KEY, process.env.OPENAI_DEPLOYMENT_SEARCH_DOC)
 const splicedDocument = new SpliceDocument(blob)
 const blobTranslation = new BlobStorage(process.env.AzureWebJobsStorage, "translated-documents")
-const redactPdf = new RedactPdf(blob, blobTranslation)
+//const redactPdf = new RedactPdf(blob, blobTranslation)
 const textSegmentation = new TextSegmentation()
 const splitPdf = new SplitPdf()
+const jsonToText = new JsonToText()
+
+const formatKMAcceleratorService : BpaService = {
+    bpaServiceId : "abc123",
+    inputTypes: ["stt"],
+    outputTypes: ["formatKMAccelerator"],
+    name: "formatKMAccelerator",
+    process: language.formatKMAccelerator,
+    serviceSpecificConfig: {
+        
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
+const piiToTextService : BpaService = {
+    bpaServiceId : "abc123",
+    inputTypes: ["recognizePiiEntities"],
+    outputTypes: ["text"],
+    name: "piiToText",
+    process: language.piiToText,
+    serviceSpecificConfig: {
+        
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
 
 const splitPdfService : BpaService = {
     bpaServiceId : "abc123",
@@ -88,19 +118,19 @@ const textSegmentationService : BpaService = {
     }
 }
 
-const redactPdfService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["recognizePiiEntities"],
-    outputTypes: ["redactPdf"],
-    name: "redactPdf",
-    process: redactPdf.process,
-    serviceSpecificConfig: {
+// const redactPdfService : BpaService = {
+//     bpaServiceId : "abc123",
+//     inputTypes: ["recognizePiiEntities"],
+//     outputTypes: ["redactPdf"],
+//     name: "redactPdf",
+//     process: redactPdf.process,
+//     serviceSpecificConfig: {
         
-    },
-    serviceSpecificConfigDefaults: {
+//     },
+//     serviceSpecificConfigDefaults: {
 
-    }
-}
+//     }
+// }
 
 const spliceDocumentService : BpaService = {
     bpaServiceId : "abc123",
@@ -136,6 +166,20 @@ const openaiGenericService : BpaService = {
     outputTypes: ["openaiGeneric"],
     name: "openaiGeneric",
     process: openaiText.processGeneric,
+    serviceSpecificConfig: {
+        
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
+const openaiRestService : BpaService = {
+    bpaServiceId : "abc123",
+    inputTypes: ["text","txt"],
+    outputTypes: ["openaiGeneric"],
+    name: "openaiRest",
+    process: openaiText.processRest,
     serviceSpecificConfig: {
         
     },
@@ -1027,11 +1071,23 @@ const xmlToJsonService : BpaService = {
     }
 }
 
+const jsonToTextService : BpaService = {
+    inputTypes: ["json"],
+    outputTypes: ["text"],
+    name: "jsonToText",
+    bpaServiceId: "abc123",
+    process: jsonToText.process,
+    serviceSpecificConfig: {
 
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
 
 export const serviceCatalog = {
     // "copy" : copyService,
-    "redactPdf" : redactPdfService,
+    //"redactPdf" : redactPdfService,
     "spliceDocument" : spliceDocumentService,
     "simplifyInvoice" : simplifyInvoiceService,
     "ocrService" : ocrService, 
@@ -1094,9 +1150,13 @@ export const serviceCatalog = {
     "tableParser" : tableParserService,
     "openaiSummarize" : openaiSummarizeService,
     "openaiGeneric" : openaiGenericService,
+    "openaiRest" : openaiRestService,
     "openaiEmbeddings" : openaiEmbeddingsService,
     "textSegmentation" : textSegmentationService,
     "textSegmentationByPage" : textSegmentationByPageService,
-    "splitPdf" : splitPdfService
+    "splitPdf" : splitPdfService,
+    "piiToText" : piiToTextService,
+    "formatKMAccelerator" : formatKMAcceleratorService,
+    "jsonToText" : jsonToTextService
 }
 

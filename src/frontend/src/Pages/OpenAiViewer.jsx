@@ -119,15 +119,15 @@ export default function OpenAiViewer(props) {
                         </div>
                     </div>
                     <div style={{ width: "70%", padding: "50px" }}>
-                        {(docData?.aggregatedResults?.ocr?.content) ? docData.aggregatedResults.ocr.content.slice(0,700)+"..." : ""}
+                        {/* {(docData?.aggregatedResults?.ocr?.content) ? docData.aggregatedResults.ocr.content.slice(0,700)+"..." : ""}
                         {(docData?.aggregatedResults?.ocrToText) ? docData.aggregatedResults.ocrToText.slice(0,700)+"..." : ""}
                         {(docData?.aggregatedResults?.sttToText) ? docData.aggregatedResults.sttToText.slice(0,700)+"..." : ""}
                         <div style={{marginTop:"20px", fontWeight : "bold"}}>
                             {(docData?.aggregatedResults?.openaiGeneric) ? docData.aggregatedResults.openaiGeneric.map(v => v.choices[0].text) : ""}
                         </div>
                         <div style={{marginTop:"20px", fontWeight : "bold"}}>
-                            {(docData?.aggregatedResults?.openaiSummarize?.choices[0].text) ? docData.aggregatedResults.openaiSummarize.choices[0].text : ""}
-                        </div>
+                            {(docData?.aggregatedResults?.openaiSummarize[0].choices[0].text) ? docData.aggregatedResults.openaiSummarize[0].choices[0].text : ""}
+                        </div> */}
                         {(docData) ? <JSONTree data={docData} theme={theme} shouldExpandNode={() => false} /> : <></>}
                     </div>
 
