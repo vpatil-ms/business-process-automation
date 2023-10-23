@@ -121,7 +121,7 @@ const defaultChat = async (context, req) => {
   }
   if(req.body.index?.searchableFields ){
     req.body.index.searchableFields = req.body.index.searchableFields.filter(sf => {
-      if(!sf.includes('vector')){
+      if(!sf.toLowerCase().includes('vector') && !sf.toLowerCase().includes('/')){
         return sf
       }
     })
@@ -134,7 +134,7 @@ const defaultChat = async (context, req) => {
           "endpoint": process.env.COGSEARCH_URL,
           "key": process.env.COGSEARCH_APIKEY,
           "indexName": req.body.index.name,
-          "semanticConfiguration": req.body.index?.semanticConfiguration && req.body.index?.semanticConfiguration.length > 0 ? req.body.index?.semanticConfiguration[0] : null,
+          "semanticConfiguration": req.body.index?.semanticConfigurations && req.body.index?.semanticConfigurations.length > 0 ? req.body.index?.semanticConfigurations[0].name : null,
           "queryType": req.body.index?.semanticConfigurations && req.body.index?.semanticConfigurations.length > 0 ? "semantic" : "simple",
           "fieldsMapping": {
             "contentFieldsSeparator": "\n",

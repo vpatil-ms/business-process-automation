@@ -1,7 +1,6 @@
 import * as sdk from "microsoft-cognitiveservices-speech-sdk";
 import { BpaServiceObject } from '../engine/types'
 import { BlobServiceClient, ContainerClient, BlockBlobClient, ContainerGenerateSasUrlOptions, ContainerSASPermissions } from "@azure/storage-blob"
-
 import axios, { AxiosRequestConfig, AxiosResponse } from 'axios'
 import { DB } from "./db";
 import MessageQueue from "./messageQueue";
@@ -103,6 +102,77 @@ export class Speech {
             }
         }
         axiosResp = await axios.post(process.env.SPEECH_SUB_ENDPOINT + 'speechtotext/v3.0/transcriptions', payload, axiosParams)
+        //httpResult = axiosResp.status
+
+        input.aggregatedResults["speechToText"] = {
+            location: axiosResp.headers.location,
+            stage: "stt",
+            filename: input.filename
+        }
+
+        return {
+            index: index,
+            type: "async transaction",
+            label: input.label,
+            filename: input.filename,
+            pipeline: input.pipeline,
+            bpaId: input.bpaId,
+            aggregatedResults: input.aggregatedResults,
+            resultsIndexes: input.resultsIndexes,
+            id: input.id,
+            vector: input.vector
+        }
+    }
+
+    public processWhisperBatch = async (input: BpaServiceObject, index: number): Promise<BpaServiceObject> => {
+
+        console.log("kicking off whisper batch.......")
+
+        const options: ContainerGenerateSasUrlOptions = {
+            permissions: ContainerSASPermissions.parse("r"),
+            expiresOn: new Date(new Date().valueOf() + (1000 * 60 * 60 * 24)),
+        }
+        const filename = input.filename.replace("documents/", "")
+
+        // let httpResult = 429
+        let axiosResp: AxiosResponse
+        const blobClient: BlockBlobClient = this._blobContainerClient.getBlockBlobClient(filename) // can throw 429
+        const sasUrl = await blobClient.generateSasUrl(options)
+        let payload = {
+            "contentUrls": [
+                sasUrl
+            ],
+            "properties": {
+                "wordLevelTimestampsEnabled": false
+            },
+            "locale": "en-US",
+            "model": {
+                "self": process.env.WHISPER_MODEL//"https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2-preview.1/models/base/71cbd7af-3212-43ab-8695-666fb28ffef7"
+              },
+            "displayName": "Transcription of file using default model for en-US"
+        }
+        if (input?.serviceSpecificConfig?.to) {
+            payload = {
+                "contentUrls": [
+                    sasUrl
+                ],
+                "properties": {
+                    "wordLevelTimestampsEnabled": false
+                },
+                "model": {
+                    "self": process.env.WHISPER_MODEL
+                  },
+                "locale": input.serviceSpecificConfig.to,
+                "displayName": "Transcription of file using default model for en-US"
+            }
+        }
+        const axiosParams: AxiosRequestConfig = {
+            headers: {
+                "Content-Type": "application/json",
+                "Ocp-Apim-Subscription-Key": process.env.SPEECH_SUB_KEY
+            }
+        }
+        axiosResp = await axios.post(process.env.SPEECH_SUB_ENDPOINT + 'speechtotext/v3.1/transcriptions', payload, axiosParams)
         //httpResult = axiosResp.status
 
         input.aggregatedResults["speechToText"] = {

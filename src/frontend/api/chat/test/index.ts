@@ -24,7 +24,7 @@ process.env.AZURE_OPENAI_API_DEPLOYMENT_NAME = data.Values.OPENAI_DEPLOYMENT_TEX
 // process.env.AZURE_OPENAI_API_EMBEDDINGS_DEPLOYMENT_NAME="gpt-35-turbo"
 process.env.AZURE_OPENAI_API_VERSION = "2023-03-15-preview"
 process.env.AZURE_OPENAI_API_BASE = data.Values.OPENAI_ENDPOINT
-process.env.MAPS_API_KEY = data.Values.MAPS_API_KEY
+//process.env.MAPS_API_KEY = data.Values.MAPS_API_KEY
 process.env.COGSEARCH_URL = data.Values.COGSEARCH_URL
 process.env.COGSEARCH_APIKEY = data.Values.COGSEARCH_APIKEY
 

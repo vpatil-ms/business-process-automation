@@ -1398,7 +1398,7 @@
                         },
                         {
                             "name": "WEBSITE_RUN_FROM_PACKAGE",
-                            "value": "https://bpasource.blob.core.windows.net/source/backendv039.zip?sv=2020-10-02&st=2023-07-12T11%3A33%3A04Z&se=2024-03-21T12%3A33%3A00Z&sr=b&sp=r&sig=ITV4DPDPW2ruSzu75YmtgedVvgFhGkzS8Qodw69eQ9Q%3D"
+                            "value": "https://bpasource.blob.core.windows.net/source/backendv049.zip?sv=2020-10-02&st=2023-09-27T16%3A50%3A53Z&se=2024-06-20T16%3A50%3A00Z&sr=b&sp=r&sig=UFXTJDz6%2FOikgObdcERqSPI37Ao0KYTzF8UoCjbegiI%3D"
                         },
                         {
                             "name": "WEBSITE_VNET_ROUTE_ALL",
@@ -1418,7 +1418,7 @@
                         },
                         {
                             "name": "WEBSITE_NODE_DEFAULT_VERSION",
-                            "value": "~16"
+                            "value": "~18"
                         },
                         {
                             "name": "FUNCTIONS_EXTENSION_VERSION",
@@ -1563,8 +1563,11 @@
                         {
                             "name": "OPENAI_DEPLOYMENT_SEARCH_QUERY",
                             "value": "text-embedding-ada-002"
+                        },
+                        {
+                            "name": "WHISPER_MODEL",
+                            "value": "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2-preview.1/models/base/71cbd7af-3212-43ab-8695-666fb28ffef7"
                         }
-
                     ]
                 }
             },

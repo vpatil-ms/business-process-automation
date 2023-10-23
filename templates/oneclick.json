@@ -638,12 +638,12 @@
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('hostingPlanName'))]",
         "clientAffinityEnabled": true,
         "siteConfig": {
-          "linuxFxVersion": "Node|16",
+          "linuxFxVersion": "Node|18",
           "alwaysOn": true,
           "appSettings": [
             {
               "name": "WEBSITE_RUN_FROM_PACKAGE",
-              "value": "https://bpasource.blob.core.windows.net/source/backendv043.zip?sv=2020-10-02&st=2023-08-28T19%3A10%3A54Z&se=2024-03-27T19%3A10%3A00Z&sr=b&sp=r&sig=w9pxFyKOQ7gME6YWbYURMCnCVTUS5fmvNENxT9OVrEs%3D"
+              "value": "https://bpasource.blob.core.windows.net/source/backendv050.zip?sv=2020-10-02&st=2023-10-16T12%3A44%3A43Z&se=2024-07-19T12%3A44%3A00Z&sr=b&sp=r&sig=si5yNbcSi9Fno8RWMsB3AhhoFyVjwbic0CzX7Aam6XM%3D"
             },
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
@@ -758,6 +758,14 @@
               "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('cogServicesName'))).endpoint]"
             },
             {
+              "name": "VISION_SUB_KEY",
+              "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', parameters('cogServicesName')), '2021-10-01').key1]"
+            },
+            {
+              "name": "VISION_SUB_ENDPOINT",
+              "value": "[reference(resourceId('Microsoft.CognitiveServices/accounts', parameters('cogServicesName'))).endpoint]"
+            },
+            {
               "name": "TRANSLATE_APIKEY",
               "value": "[listKeys(resourceId('Microsoft.CognitiveServices/accounts', parameters('cogServicesName')), '2021-10-01').key1]"
             },
@@ -772,6 +780,10 @@
             {
               "name": "HUGGINGFACE_ENDPOINT",
               "value": "[format('https://{0}.azurewebsites.net', parameters('functionAppNamePython'))]"
+            },
+            {
+              "name": "WHISPER_MODEL",
+              "value": "https://eastus.api.cognitive.microsoft.com/speechtotext/v3.2-preview.1/models/base/71cbd7af-3212-43ab-8695-666fb28ffef7"
             }
           ]
         }

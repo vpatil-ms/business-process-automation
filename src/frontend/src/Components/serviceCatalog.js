@@ -26,6 +26,21 @@ import { getContentModeratorPricing, getCustomLanguagePricing, getDocumentTransl
 
 export const sc = {
 
+    "analyzeImage": {
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "stt"
+        ],
+        "outputTypes": [
+            "formatKMAccelerator"
+        ],
+        "image": pii,
+        "label": "Format For KM Accelerator UI",
+        "name": "formatKMAccelerator",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: noCharge
+    },
     "formatKMAccelerator": {
         "bpaServiceId": "abc123",
         "inputTypes": [
@@ -146,6 +161,21 @@ export const sc = {
         "serviceSpecificConfigDefaults": {},
         getPrice: noCharge
     },
+    "convertToChatCopilot": {
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "openaiEmbeddings"
+        ],
+        "outputTypes": [
+            "chatCopilot"
+        ],
+        "image": openai,
+        "label": "Convert To Chat Copilot",
+        "name": "convertToChatCopilot",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: noCharge
+    },
     "openaiGeneric": {
         "bpaServiceId": "abc123",
         "inputTypes": [
@@ -172,6 +202,21 @@ export const sc = {
         "image": openai,
         "label": "OpenAI (REST) Provide the Body of the REST API Call (Advanced)",
         "name": "openaiRest",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: noCharge
+    },
+    "piiToOpenaiRest": {
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "recognizePiiEntities"
+        ],
+        "outputTypes": [
+            "openaiGenericMulti"
+        ],
+        "image": openai,
+        "label": "PII To OpenAI (REST) Provide the Body of the REST API Call (Advanced)",
+        "name": "piiToOpenaiRest",
         "serviceSpecificConfig": {},
         "serviceSpecificConfigDefaults": {},
         getPrice: noCharge
@@ -639,6 +684,23 @@ export const sc = {
     //     "serviceSpecificConfigDefaults": {},
     //     getPrice : getFormRecReadPricing
     // },
+    "tableToText": {
+        "defaultTier": "S0 Read Pages",
+        "filters": [{ key: 'serviceName', value: 'Azure Applied AI Services' }, { key: 'productName', value: 'Azure Form Recognizer' }],
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "layout"
+        ],
+        "outputTypes": [
+            "tableToText"
+        ],
+        "image": layoutLogo,
+        "label": "Convert Tables to Text",
+        "name": "tableToText",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: noCharge
+    },
     "layoutBatch": {
         "defaultTier": "S0 Read Pages",
         "filters": [{ key: 'serviceName', value: 'Azure Applied AI Services' }, { key: 'productName', value: 'Azure Form Recognizer' }],
@@ -776,6 +838,41 @@ export const sc = {
         "serviceSpecificConfig": {},
         "serviceSpecificConfigDefaults": {},
         getPrice: getSpeechPricing
+    },
+    "whisperService": {
+        "defaultTier": "Whisper Speech",
+        "filters": [],
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "wav",
+            "mp3"
+        ],
+        "outputTypes": [
+            "stt"
+        ],
+        "image": openai,
+        "label": "Whisper Speech",
+        "name": "whisper",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: noCharge
+    },
+    "piiSttService": {
+        "defaultTier": "Speech To Text",
+        "filters": [{ key: 'serviceName', value: 'Cognitive Services' }, { key: 'productName', value: 'Language' }],
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "stt"
+        ],
+        "outputTypes": [
+            "recognizePiiEntitiesMulti"
+        ],
+        "image": pii,
+        "label": "Pii Redaction of Speech To Text Service (Batch)",
+        "name": "piiStt",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: getLanguagePricing
     },
     "sttToTextService": {
         "defaultTier": "Speech To Text",
@@ -1397,5 +1494,22 @@ export const sc = {
         "serviceSpecificConfig": {},
         "serviceSpecificConfigDefaults": {},
         getPrice: noCharge
+    },
+    "imageAnalysis": {
+        "defaultTier": "Standard Transactions",
+        "filters": [{ key: 'serviceName', value: 'Cognitive Services' }, { key: 'productName', value: 'Computer Vision' }],
+        "bpaServiceId": "abc123",
+        "inputTypes": [
+            "bmp", "jpg", "tiff", "tif", "gif"
+        ],
+        "outputTypes": [
+            "imageAnalysis"
+        ],
+        "image": layoutLogo,
+        "label": "Florence Image Analysis",
+        "name": "imageAnalysis",
+        "serviceSpecificConfig": {},
+        "serviceSpecificConfigDefaults": {},
+        getPrice: getContentModeratorPricing
     },
 }

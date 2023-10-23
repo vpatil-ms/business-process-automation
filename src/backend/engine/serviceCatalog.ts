@@ -21,13 +21,14 @@ import { SpliceDocument } from "../services/spliceDocument"
 import { TextSegmentation } from "../services/textSegmentation"
 import { SplitPdf } from "../services/splitPdf"
 import { JsonToText } from "../services/jsonToText"
+import { Vision } from "../services/vision"
 
 const changeOutput = new ChangeOutput()
 const blob = new BlobStorage(process.env.AzureWebJobsStorage, process.env.BLOB_STORAGE_CONTAINER)
 //const cosmosDb = new CosmosDB(process.env.COSMOSDB_CONNECTION_STRING,process.env.COSMOSDB_DB_NAME, process.env.COSMOSDB_CONTAINER_NAME)
-const blobDb = new BlobDB(process.env.AzureWebJobsStorage,"db", process.env.BLOB_STORAGE_CONTAINER)
+const blobDb = new BlobDB(process.env.AzureWebJobsStorage, "db", process.env.BLOB_STORAGE_CONTAINER)
 const language = new LanguageStudio(process.env.LANGUAGE_STUDIO_PREBUILT_ENDPOINT, process.env.LANGUAGE_STUDIO_PREBUILT_APIKEY)
-const speech = new Speech(process.env.SPEECH_SUB_KEY,process.env.SPEECH_SUB_REGION,process.env.AzureWebJobsStorage, process.env.BLOB_STORAGE_CONTAINER)
+const speech = new Speech(process.env.SPEECH_SUB_KEY, process.env.SPEECH_SUB_REGION, process.env.AzureWebJobsStorage, process.env.BLOB_STORAGE_CONTAINER)
 const formrec = new FormRec(process.env.FORMREC_ENDPOINT, process.env.FORMREC_APIKEY, blob, process.env.FORMREC_CONTAINER_READ_ENDPOINT)
 const translate = new Translate(process.env.TRANSLATE_ENDPOINT, process.env.TRANSLATE_APIKEY, process.env.TRANSLATE_REGION)
 const huggingface = new HuggingFace(process.env.HUGGINGFACE_ENDPOINT)
@@ -35,7 +36,7 @@ const preprocess = new Preprocess(process.env.HUGGINGFACE_ENDPOINT)
 const documentTranslation = new DocumentTranslation(process.env.BLOB_STORAGE_ACCOUNT_NAME, process.env.BLOB_STORAGE_ACCOUNT_KEY, process.env.DOCUMENT_TRANSLATION_ENDPOINT, process.env.DOCUMENT_TRANSLATION_KEY)
 const automlNer = new AutoMlNer(process.env.AUTOML_NER_ENDPOINT, process.env.AUTOML_NER_APIKEY)
 const test = new Test()
-const contentModerator = new ContentModerator(process.env.CONTENT_MODERATOR_ENDPOINT,process.env.CONTENT_MODERATOR_KEY)
+const contentModerator = new ContentModerator(process.env.CONTENT_MODERATOR_ENDPOINT, process.env.CONTENT_MODERATOR_KEY)
 const xml = new Xml()
 const videoIndexer = new VideoIndexer(process.env.AzureWebJobsStorage, process.env.BLOB_STORAGE_CONTAINER)
 const tableParser = new TableParser(blobDb)
@@ -47,71 +48,101 @@ const blobTranslation = new BlobStorage(process.env.AzureWebJobsStorage, "transl
 const textSegmentation = new TextSegmentation()
 const splitPdf = new SplitPdf()
 const jsonToText = new JsonToText()
+const vision = new Vision(process.env.VISION_SUB_ENDPOINT, process.env.VISION_SUB_KEY, blob)
 
-const formatKMAcceleratorService : BpaService = {
-    bpaServiceId : "abc123",
+
+const ImageAnalysisService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["bmp", "jpg", "tiff", "gif"],
+    outputTypes: ["imageAnalysis"],
+    name: "imageAnalysis",
+    process: vision.process,
+    serviceSpecificConfig: {
+
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
+const tableToTextService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["layout"],
+    outputTypes: ["tableToText"],
+    name: "tableToText",
+    process: textSegmentation.tableToText,
+    serviceSpecificConfig: {
+
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
+const formatKMAcceleratorService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["stt"],
     outputTypes: ["formatKMAccelerator"],
     name: "formatKMAccelerator",
     process: language.formatKMAccelerator,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const piiToTextService : BpaService = {
-    bpaServiceId : "abc123",
+const piiToTextService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["recognizePiiEntities"],
     outputTypes: ["text"],
     name: "piiToText",
     process: language.piiToText,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const splitPdfService : BpaService = {
-    bpaServiceId : "abc123",
+const splitPdfService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["pdf"],
     outputTypes: ["splitPdf"],
     name: "splitPdf",
     process: splitPdf.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const textSegmentationByPageService : BpaService = {
-    bpaServiceId : "abc123",
+const textSegmentationByPageService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["ocr"],
     outputTypes: ["textSegmentation"],
     name: "textSegmentationByPage",
     process: textSegmentation.processByPage,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const textSegmentationService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["ocr","text","txt"],
+const textSegmentationService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["ocr", "text", "txt"],
     outputTypes: ["textSegmentation"],
     name: "textSegmentation",
     process: textSegmentation.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -125,200 +156,214 @@ const textSegmentationService : BpaService = {
 //     name: "redactPdf",
 //     process: redactPdf.process,
 //     serviceSpecificConfig: {
-        
+
 //     },
 //     serviceSpecificConfigDefaults: {
 
 //     }
 // }
 
-const spliceDocumentService : BpaService = {
-    bpaServiceId : "abc123",
+const spliceDocumentService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["pdf"],
     outputTypes: ["pdf"],
     name: "spliceDocument",
     process: splicedDocument.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const openaiEmbeddingsService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const openaiEmbeddingsService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["openaiEmbeddings"],
     name: "openaiEmbeddings",
     process: openaiSearchDoc.processEmbeddings,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const openaiGenericService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const openaiGenericService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["openaiGeneric"],
     name: "openaiGeneric",
     process: openaiText.processGeneric,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const openaiRestService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const openaiRestService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["openaiGeneric"],
     name: "openaiRest",
     process: openaiText.processRest,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const openaiSummarizeService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const piiToOpenaiRestService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["recognizePiiEntities"],
+    outputTypes: ["openaiGenericMulti"],
+    name: "piiToOpenaiRest",
+    process: openaiText.piiToProcessRest,
+    serviceSpecificConfig: {
+
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
+const openaiSummarizeService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["openaiSummarize"],
     name: "openaiSummarize",
     process: openaiText.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const ocrToTextService : BpaService = {
-    bpaServiceId : "abc123",
+const ocrToTextService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["ocr"],
     outputTypes: ["text"],
     name: "ocrToText",
     process: formrec.ocrToText,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const ocrContainerToTextService : BpaService = {
-    bpaServiceId : "abc123",
+const ocrContainerToTextService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["ocrContainer"],
     outputTypes: ["text"],
     name: "ocrContainerToText",
     process: formrec.ocrContainerToText,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const simplifyInvoiceService : BpaService = {
-    bpaServiceId : "abc123",
+const simplifyInvoiceService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["invoice"],
     outputTypes: ["simpleInvoice"],
     name: "simplifyInvoice",
     process: formrec.simplifyInvoice,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const tableParserService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["customFormRec","layout","generalDocument"],
+const tableParserService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["customFormRec", "layout", "generalDocument"],
     outputTypes: ["tableParser"],
     name: "tableParser",
     process: tableParser.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const videoIndexerService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: [ "flv",
-    "mxf",
-    "gxf",
-    "mpg",
-    "wmv",
-    "asf",
-    "avi",
-    "mp4",
-    "mov",
-    "isma",
-    "ismv",
-    "mkv"],
+const videoIndexerService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["flv",
+        "mxf",
+        "gxf",
+        "mpg",
+        "wmv",
+        "asf",
+        "avi",
+        "mp4",
+        "mov",
+        "isma",
+        "ismv",
+        "mkv"],
     outputTypes: ["videoIndexer"],
     name: "videoIndexer",
     process: videoIndexer.processBatch,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const contentModeratorImageService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: [ "bmp","jpg","tiff","gif"],
+const contentModeratorImageService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["bmp", "jpg", "tiff", "gif"],
     outputTypes: ["contentModeratorImage"],
     name: "contentModeratorImage",
     process: contentModerator.image,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const contentModeratorTextService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const contentModeratorTextService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["contentModeratorText"],
     name: "contentModeratorText",
     process: contentModerator.text,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const toTxtService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const toTxtService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["text"],
     name: "totxt",
     process: blob.toTxt,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -335,56 +380,56 @@ const toTxtService : BpaService = {
 //     serviceSpecificConfig: {
 
 
-const changeOutputService : BpaService = {
-    bpaServiceId : "abc123",
+const changeOutputService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["any"],
     outputTypes: ["changeOutput"],
     name: "changeOutput",
     process: changeOutput.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const automlNerService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const automlNerService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["automlNer"],
     name: "automlNer",
     process: automlNer.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const translateService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["text","txt"],
+const translateService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["text", "txt"],
     outputTypes: ["text"],
     name: "translate",
     process: translate.translate,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const testService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const testService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["test"],
     name: "test",
     process: test.process,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -392,56 +437,56 @@ const testService : BpaService = {
 }
 
 
-const layout : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const layout: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["layout"],
     name: "layout",
     process: formrec.layout,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const layoutBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const layoutBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["layout"],
     name: "layoutBatch",
     process: formrec.layoutAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const generalDocumentBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const generalDocumentBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["generalDocument"],
     name: "generalDocumentBatch",
     process: formrec.generalDocumentAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltBusinessCardBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltBusinessCardBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltBusinessCard"],
     name: "prebuiltBusinessCardBatch",
     process: formrec.prebuiltBusinessCardAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -449,56 +494,56 @@ const prebuiltBusinessCardBatch : BpaService = {
 }
 
 
-const prebuiltIdentityBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltIdentityBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltIdentity"],
     name: "prebuiltIdentityBatch",
     process: formrec.prebuiltIdentityAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltInvoiceBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltInvoiceBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltInvoice"],
     name: "prebuiltInvoiceBatch",
     process: formrec.prebuiltInvoiceAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltReceiptBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltReceiptBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltReceipt"],
     name: "prebuiltReceiptBatch",
     process: formrec.prebuiltReceiptAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltTaxW2Batch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltTaxW2Batch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltTaxW2"],
     name: "prebuiltTaxW2Batch",
     process: formrec.prebuiltTaxW2Async,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -506,42 +551,42 @@ const prebuiltTaxW2Batch : BpaService = {
 }
 
 
-const customFormRecBatch : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const customFormRecBatch: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["customFormRec"],
     name: "customFormRecBatch",
     process: formrec.customFormrecAsync,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const generalDocument : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const generalDocument: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["generalDocument"],
     name: "generalDocument",
     process: formrec.generalDocument,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltBusinessCard : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltBusinessCard: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltBusinessCard"],
     name: "prebuiltBusinessCard",
     process: formrec.prebuiltBusinessCard,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -549,56 +594,56 @@ const prebuiltBusinessCard : BpaService = {
 }
 
 
-const prebuiltIdentity : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltIdentity: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltIdentity"],
     name: "prebuiltIdentity",
     process: formrec.prebuiltIdentity,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltInvoice : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltInvoice: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltInvoice"],
     name: "prebuiltInvoice",
     process: formrec.prebuiltInvoice,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltReceipt : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltReceipt: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltReceipt"],
     name: "prebuiltReceipt",
     process: formrec.prebuiltReceipt,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const prebuiltTaxW2 : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const prebuiltTaxW2: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["prebuiltTaxW2"],
     name: "prebuiltTaxW2",
     process: formrec.prebuiltTaxW2,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
@@ -606,22 +651,22 @@ const prebuiltTaxW2 : BpaService = {
 }
 
 
-const customFormRec : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["pdf","jpg","png","tiff","tif","jpeg"],
+const customFormRec: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["pdf", "jpg", "png", "tiff", "tif", "jpeg"],
     outputTypes: ["customFormRec"],
     name: "customFormRec",
     process: formrec.customFormrec,
     serviceSpecificConfig: {
-        
+
     },
     serviceSpecificConfigDefaults: {
 
     }
 }
 
-const sttToTextService : BpaService = {
-    bpaServiceId : "abc123",
+const sttToTextService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["stt"],
     outputTypes: ["text"],
     name: "sttToText",
@@ -649,9 +694,9 @@ const sttToTextService : BpaService = {
 //     }
 // }
 
-const sttBatchService : BpaService = {
-    bpaServiceId : "abc123",
-    inputTypes: ["wav","mp3","mp4"],
+const sttBatchService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["wav", "mp3", "mp4"],
     outputTypes: ["stt"],
     name: "sttBatch",
     process: speech.processBatch,
@@ -663,11 +708,11 @@ const sttBatchService : BpaService = {
     }
 }
 
-const ocrContainerBatchService : BpaService = {
-    bpaServiceId : "abc123",
+const ocrContainerBatchService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["pdf",
-    "tiff","gif","jpg","jpeg",
-    "doc","docx","ppt","pptx"],
+        "tiff", "gif", "jpg", "jpeg",
+        "doc", "docx", "ppt", "pptx"],
     outputTypes: ["ocrContainer"],
     name: "ocrContainerBatch",
     process: formrec.readContainerAsync,
@@ -679,11 +724,11 @@ const ocrContainerBatchService : BpaService = {
     }
 }
 
-const ocrContainerService : BpaService = {
-    bpaServiceId : "abc123",
+const ocrContainerService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["pdf",
-    "tiff","gif","jpg","jpeg",
-    "doc","docx","ppt","pptx"],
+        "tiff", "gif", "jpg", "jpeg",
+        "doc", "docx", "ppt", "pptx"],
     outputTypes: ["ocrContainer"],
     name: "ocrContainer",
     process: formrec.readContainer,
@@ -695,11 +740,11 @@ const ocrContainerService : BpaService = {
     }
 }
 
-const ocrService : BpaService = {
-    bpaServiceId : "abc123",
+const ocrService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["pdf",
-    "tiff","gif","jpg","jpeg",
-    "doc","docx","ppt","pptx"],
+        "tiff", "gif", "jpg", "jpeg",
+        "doc", "docx", "ppt", "pptx"],
     outputTypes: ["ocr"],
     name: "ocr",
     process: formrec.readDocument,
@@ -711,11 +756,11 @@ const ocrService : BpaService = {
     }
 }
 
-const ocrBatchService : BpaService = {
-    bpaServiceId : "abc123",
+const ocrBatchService: BpaService = {
+    bpaServiceId: "abc123",
     inputTypes: ["pdf",
-    "tiff","gif","jpg","jpeg",
-    "doc","docx","ppt","pptx"],
+        "tiff", "gif", "jpg", "jpeg",
+        "doc", "docx", "ppt", "pptx"],
     outputTypes: ["ocr"],
     name: "ocrBatch",
     process: formrec.readDocumentAsync,
@@ -727,7 +772,7 @@ const ocrBatchService : BpaService = {
     }
 }
 
-const summaryToText : BpaService = {
+const summaryToText: BpaService = {
     inputTypes: ["extractSummary"],
     outputTypes: ["text"],
     name: "summaryToText",
@@ -741,8 +786,8 @@ const summaryToText : BpaService = {
     }
 }
 
-const extractSummaryBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const extractSummaryBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["extractSummary"],
     name: "extractSummaryBatch",
     bpaServiceId: "abc123",
@@ -755,8 +800,8 @@ const extractSummaryBatch : BpaService = {
     }
 }
 
-const analyzeSentimentBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const analyzeSentimentBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["analyzeSentiment"],
     name: "analyzeSentimentBatch",
     bpaServiceId: "abc123",
@@ -769,8 +814,8 @@ const analyzeSentimentBatch : BpaService = {
     }
 }
 
-const extractKeyPhrasesBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const extractKeyPhrasesBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["extractKeyPhrases"],
     name: "extractKeyPhrasesBatch",
     bpaServiceId: "abc123",
@@ -782,8 +827,8 @@ const extractKeyPhrasesBatch : BpaService = {
 
     }
 }
-const multiCategoryClassifyBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const multiCategoryClassifyBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["multiCategoryClassify"],
     name: "multiCategoryClassifyBatch",
     bpaServiceId: "abc123",
@@ -795,8 +840,8 @@ const multiCategoryClassifyBatch : BpaService = {
 
     }
 }
-const recognizeCustomEntitiesBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizeCustomEntitiesBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizeCustomEntities"],
     name: "recognizeCustomEntitiesBatch",
     bpaServiceId: "abc123",
@@ -808,8 +853,8 @@ const recognizeCustomEntitiesBatch : BpaService = {
 
     }
 }
-const recognizeEntitiesBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizeEntitiesBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizeEntities"],
     name: "recognizeEntitiesBatch",
     bpaServiceId: "abc123",
@@ -822,8 +867,8 @@ const recognizeEntitiesBatch : BpaService = {
     }
 }
 
-const recognizeLinkedEntitiesBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizeLinkedEntitiesBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizeLinkedEntities"],
     name: "recognizeLinkedEntitiesBatch",
     bpaServiceId: "abc123",
@@ -836,8 +881,8 @@ const recognizeLinkedEntitiesBatch : BpaService = {
     }
 }
 
-const recognizePiiEntitiesBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizePiiEntitiesBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizePiiEntities"],
     name: "recognizePiiEntitiesBatch",
     bpaServiceId: "abc123",
@@ -850,8 +895,8 @@ const recognizePiiEntitiesBatch : BpaService = {
     }
 }
 
-const singleCategoryClassifyBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const singleCategoryClassifyBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["singleCategoryClassify"],
     name: "singleCategoryClassifyBatch",
     bpaServiceId: "abc123",
@@ -864,8 +909,8 @@ const singleCategoryClassifyBatch : BpaService = {
     }
 }
 
-const healthCareServiceBatch : BpaService = {
-    inputTypes: ["text","txt"],
+const healthCareServiceBatch: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["healthCareResults"],
     name: "healthCareBatch",
     bpaServiceId: "abc123",
@@ -878,8 +923,8 @@ const healthCareServiceBatch : BpaService = {
     }
 }
 
-const extractSummary : BpaService = {
-    inputTypes: ["text","txt"],
+const extractSummary: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["extractSummary"],
     name: "extractSummary",
     bpaServiceId: "abc123",
@@ -892,8 +937,8 @@ const extractSummary : BpaService = {
     }
 }
 
-const analyzeSentiment : BpaService = {
-    inputTypes: ["text","txt"],
+const analyzeSentiment: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["analyzeSentiment"],
     name: "analyzeSentiment",
     bpaServiceId: "abc123",
@@ -906,8 +951,8 @@ const analyzeSentiment : BpaService = {
     }
 }
 
-const extractKeyPhrases : BpaService = {
-    inputTypes: ["text","txt"],
+const extractKeyPhrases: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["extractKeyPhrases"],
     name: "extractKeyPhrases",
     bpaServiceId: "abc123",
@@ -919,8 +964,8 @@ const extractKeyPhrases : BpaService = {
 
     }
 }
-const multiCategoryClassify : BpaService = {
-    inputTypes: ["text","txt"],
+const multiCategoryClassify: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["multiCategoryClassify"],
     name: "multiCategoryClassify",
     bpaServiceId: "abc123",
@@ -932,8 +977,8 @@ const multiCategoryClassify : BpaService = {
 
     }
 }
-const recognizeCustomEntities : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizeCustomEntities: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizeCustomEntities"],
     name: "recognizeCustomEntities",
     bpaServiceId: "abc123",
@@ -945,8 +990,8 @@ const recognizeCustomEntities : BpaService = {
 
     }
 }
-const recognizeEntities : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizeEntities: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizeEntities"],
     name: "recognizeEntities",
     bpaServiceId: "abc123",
@@ -959,8 +1004,8 @@ const recognizeEntities : BpaService = {
     }
 }
 
-const recognizeLinkedEntities : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizeLinkedEntities: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizeLinkedEntities"],
     name: "recognizeLinkedEntities",
     bpaServiceId: "abc123",
@@ -973,8 +1018,8 @@ const recognizeLinkedEntities : BpaService = {
     }
 }
 
-const recognizePiiEntities : BpaService = {
-    inputTypes: ["text","txt"],
+const recognizePiiEntities: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["recognizePiiEntities"],
     name: "recognizePiiEntities",
     bpaServiceId: "abc123",
@@ -987,8 +1032,8 @@ const recognizePiiEntities : BpaService = {
     }
 }
 
-const singleCategoryClassify : BpaService = {
-    inputTypes: ["text","txt"],
+const singleCategoryClassify: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["singleCategoryClassify"],
     name: "singleCategoryClassify",
     bpaServiceId: "abc123",
@@ -1001,8 +1046,8 @@ const singleCategoryClassify : BpaService = {
     }
 }
 
-const healthCareService : BpaService = {
-    inputTypes: ["text","txt"],
+const healthCareService: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["healthCareResults"],
     name: "healthCare",
     bpaServiceId: "abc123",
@@ -1015,8 +1060,8 @@ const healthCareService : BpaService = {
     }
 }
 
-const preprocessService : BpaService = {
-    inputTypes: ["text","txt"],
+const preprocessService: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["preprocess"],
     name: "preprocess",
     bpaServiceId: "abc123",
@@ -1029,8 +1074,8 @@ const preprocessService : BpaService = {
     }
 }
 
-const huggingFaceNER : BpaService = {
-    inputTypes: ["text","txt"],
+const huggingFaceNER: BpaService = {
+    inputTypes: ["text", "txt"],
     outputTypes: ["huggingFaceNER"],
     name: "huggingFaceNER",
     bpaServiceId: "abc123",
@@ -1043,7 +1088,7 @@ const huggingFaceNER : BpaService = {
     }
 }
 
-const documentTranslationService : BpaService = {
+const documentTranslationService: BpaService = {
     inputTypes: ["pdf"],
     outputTypes: ["pdf"],
     name: "documentTranslation",
@@ -1057,7 +1102,7 @@ const documentTranslationService : BpaService = {
     }
 }
 
-const xmlToJsonService : BpaService = {
+const xmlToJsonService: BpaService = {
     inputTypes: ["xml"],
     outputTypes: ["xmlToJson"],
     name: "xmlToJson",
@@ -1071,7 +1116,7 @@ const xmlToJsonService : BpaService = {
     }
 }
 
-const jsonToTextService : BpaService = {
+const jsonToTextService: BpaService = {
     inputTypes: ["json"],
     outputTypes: ["text"],
     name: "jsonToText",
@@ -1085,78 +1130,125 @@ const jsonToTextService : BpaService = {
     }
 }
 
+const piiSttService: BpaService = {
+    inputTypes: ["stt"],
+    outputTypes: ["stt"],
+    name: "piiStt",
+    bpaServiceId: "abc123",
+    process: language.piiStt,
+    serviceSpecificConfig: {
+
+    },
+    serviceSpecificConfigDefaults: {
+
+    },
+}
+const convertToChatCopilotService: BpaService = {
+    inputTypes: ["openaiEmbeddings"],
+    outputTypes: ["chatCopilot"],
+    name: "convertToChatCopilot",
+    bpaServiceId: "abc123",
+    process: openaiSearchDoc.convertToChatCopilot,
+    serviceSpecificConfig: {
+
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
+const whisperBatchService: BpaService = {
+    bpaServiceId: "abc123",
+    inputTypes: ["wav", "mp3", "mp4"],
+    outputTypes: ["stt"],
+    name: "whisper",
+    process: speech.processWhisperBatch,
+    serviceSpecificConfig: {
+
+    },
+    serviceSpecificConfigDefaults: {
+
+    }
+}
+
 export const serviceCatalog = {
     // "copy" : copyService,
     //"redactPdf" : redactPdfService,
-    "spliceDocument" : spliceDocumentService,
-    "simplifyInvoice" : simplifyInvoiceService,
-    "ocrService" : ocrService, 
-    "ocrContainerService" : ocrContainerService, 
-    "ocrContainerBatchService" : ocrContainerBatchService, 
-    "ocrBatchService" : ocrBatchService,
-    "ocrToText" : ocrToTextService,
-    "ocrContainerToText" : ocrContainerToTextService,
-    "extractSummary" : extractSummary,
-    "analyzeSentiment" : analyzeSentiment,
-    "extractKeyPhrases" : extractKeyPhrases,
-    "multiCategoryClassify" : multiCategoryClassify,
-    "recognizeCustomEntities" : recognizeCustomEntities,
-    "recognizeEntities" : recognizeEntities,
-    "recognizeLinkedEntities" : recognizeLinkedEntities,
-    "recognizePiiEntities" : recognizePiiEntities,
-    "singleCategoryClassify" : singleCategoryClassify,
-    "extractSummaryBatch" : extractSummaryBatch,
-    "analyzeSentimentBatch" : analyzeSentimentBatch,
-    "extractKeyPhrasesBatch" : extractKeyPhrasesBatch,
-    "multiCategoryClassifyBatch" : multiCategoryClassifyBatch,
-    "recognizeCustomEntitiesBatch" : recognizeCustomEntitiesBatch,
-    "recognizeEntitiesBatch" : recognizeEntitiesBatch,
-    "recognizeLinkedEntitiesBatch" : recognizeLinkedEntitiesBatch,
-    "recognizePiiEntitiesBatch" : recognizePiiEntitiesBatch,
-    "singleCategoryClassifyBatch" : singleCategoryClassifyBatch,
-    "summaryToText" : summaryToText,
-    "sttToText" : sttToTextService,
-    "sttBatchService" : sttBatchService,
-    "translate" : translateService,
-    "layout" : layout,
-    "generalDocument" : generalDocument,
-    "prebuiltBusinessCard" : prebuiltBusinessCard,
-    "prebuiltIdentity" : prebuiltIdentity,
-    "prebuiltInvoice" : prebuiltInvoice,
-    "prebuiltReceipt" : prebuiltReceipt,
-    "prebuiltTaxW2" : prebuiltTaxW2,
-    "customFormRec" : customFormRec,
-    "layoutBatch" : layoutBatch,
-    "generalDocumentBatch" : generalDocumentBatch,
-    "prebuiltBusinessCardBatch" : prebuiltBusinessCardBatch,
-    "prebuiltIdentityBatch" : prebuiltIdentityBatch,
-    "prebuiltInvoiceBatch" : prebuiltInvoiceBatch,
-    "prebuiltReceiptBatch" : prebuiltReceiptBatch,
-    "prebuiltTaxW2Batch" : prebuiltTaxW2Batch,
-    "customFormRecBatch" : customFormRecBatch,
-    "huggingFaceNER" : huggingFaceNER,
-    "preprocess" : preprocessService,
-    "testService" : testService,
-    "healthCare" : healthCareService,
-    "healthCareBatch" : healthCareServiceBatch,
-    "documentTranslation" : documentTranslationService,
-    "automlNer" : automlNerService,
-    "changeOutput" : changeOutputService,
-    "totxt" : toTxtService,
-    "contentModeratorText" : contentModeratorTextService,
-    "contentModeratorImage" : contentModeratorImageService,
-    "xmlToJson" : xmlToJsonService,
-    "videoIndexer" : videoIndexerService,
-    "tableParser" : tableParserService,
-    "openaiSummarize" : openaiSummarizeService,
-    "openaiGeneric" : openaiGenericService,
-    "openaiRest" : openaiRestService,
-    "openaiEmbeddings" : openaiEmbeddingsService,
-    "textSegmentation" : textSegmentationService,
-    "textSegmentationByPage" : textSegmentationByPageService,
-    "splitPdf" : splitPdfService,
-    "piiToText" : piiToTextService,
-    "formatKMAccelerator" : formatKMAcceleratorService,
-    "jsonToText" : jsonToTextService
+    "convertToChatCopilot" : convertToChatCopilotService,
+    "spliceDocument": spliceDocumentService,
+    "simplifyInvoice": simplifyInvoiceService,
+    "ocrService": ocrService,
+    "ocrContainerService": ocrContainerService,
+    "ocrContainerBatchService": ocrContainerBatchService,
+    "ocrBatchService": ocrBatchService,
+    "ocrToText": ocrToTextService,
+    "ocrContainerToText": ocrContainerToTextService,
+    "extractSummary": extractSummary,
+    "analyzeSentiment": analyzeSentiment,
+    "extractKeyPhrases": extractKeyPhrases,
+    "multiCategoryClassify": multiCategoryClassify,
+    "recognizeCustomEntities": recognizeCustomEntities,
+    "recognizeEntities": recognizeEntities,
+    "recognizeLinkedEntities": recognizeLinkedEntities,
+    "recognizePiiEntities": recognizePiiEntities,
+    "singleCategoryClassify": singleCategoryClassify,
+    "extractSummaryBatch": extractSummaryBatch,
+    "analyzeSentimentBatch": analyzeSentimentBatch,
+    "extractKeyPhrasesBatch": extractKeyPhrasesBatch,
+    "multiCategoryClassifyBatch": multiCategoryClassifyBatch,
+    "recognizeCustomEntitiesBatch": recognizeCustomEntitiesBatch,
+    "recognizeEntitiesBatch": recognizeEntitiesBatch,
+    "recognizeLinkedEntitiesBatch": recognizeLinkedEntitiesBatch,
+    "recognizePiiEntitiesBatch": recognizePiiEntitiesBatch,
+    "singleCategoryClassifyBatch": singleCategoryClassifyBatch,
+    "summaryToText": summaryToText,
+    "sttToText": sttToTextService,
+    "sttBatchService": sttBatchService,
+    "translate": translateService,
+    "layout": layout,
+    "generalDocument": generalDocument,
+    "prebuiltBusinessCard": prebuiltBusinessCard,
+    "prebuiltIdentity": prebuiltIdentity,
+    "prebuiltInvoice": prebuiltInvoice,
+    "prebuiltReceipt": prebuiltReceipt,
+    "prebuiltTaxW2": prebuiltTaxW2,
+    "customFormRec": customFormRec,
+    "layoutBatch": layoutBatch,
+    "generalDocumentBatch": generalDocumentBatch,
+    "prebuiltBusinessCardBatch": prebuiltBusinessCardBatch,
+    "prebuiltIdentityBatch": prebuiltIdentityBatch,
+    "prebuiltInvoiceBatch": prebuiltInvoiceBatch,
+    "prebuiltReceiptBatch": prebuiltReceiptBatch,
+    "prebuiltTaxW2Batch": prebuiltTaxW2Batch,
+    "customFormRecBatch": customFormRecBatch,
+    "huggingFaceNER": huggingFaceNER,
+    "preprocess": preprocessService,
+    "testService": testService,
+    "healthCare": healthCareService,
+    "healthCareBatch": healthCareServiceBatch,
+    "documentTranslation": documentTranslationService,
+    "automlNer": automlNerService,
+    "changeOutput": changeOutputService,
+    "totxt": toTxtService,
+    "contentModeratorText": contentModeratorTextService,
+    "contentModeratorImage": contentModeratorImageService,
+    "xmlToJson": xmlToJsonService,
+    "videoIndexer": videoIndexerService,
+    "tableParser": tableParserService,
+    "openaiSummarize": openaiSummarizeService,
+    "openaiGeneric": openaiGenericService,
+    "openaiRest": openaiRestService,
+    "openaiEmbeddings": openaiEmbeddingsService,
+    "textSegmentation": textSegmentationService,
+    "textSegmentationByPage": textSegmentationByPageService,
+    "splitPdf": splitPdfService,
+    "piiToText": piiToTextService,
+    "formatKMAccelerator": formatKMAcceleratorService,
+    "jsonToText": jsonToTextService,
+    "piiStt": piiSttService,
+    "piiToOpenaiRest": piiToOpenaiRestService,
+    "whisper" : whisperBatchService,
+    "tableToText" : tableToTextService,
+    "imageAnalysis" : ImageAnalysisService
 }
 
